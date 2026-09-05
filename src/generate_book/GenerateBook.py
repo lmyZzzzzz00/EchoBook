@@ -2,8 +2,17 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtCore import Qt, QCoreApplication, QPoint, QRect
 from PyQt5.QtGui import QGuiApplication, QPixmap, QPainter, QPen
 from src.ocr.Run import run_ocr as get_ocr
+from src.generate_book.SettingsWidget import SettingsWidget
 import sys
 import os
+import hashlib
+
+
+def get_md5(text: str) -> str:
+    """获取字符串的MD5值"""
+    md5 = hashlib.md5()
+    md5.update(text.encode('utf-8'))
+    return md5.hexdigest()
 
 
 class GenerateBookWindow(QWidget):
@@ -27,6 +36,9 @@ class GenerateBookWindow(QWidget):
 
         # 启用鼠标追踪（可选，便于调试）
         self.setMouseTracking(True)
+
+        self.settings_widget = SettingsWidget(self)
+        self.settings_widget.hide()
 
     def load_img(self, book_name: str, img_path: str):
         """加载图片并创建书籍目录"""
@@ -102,6 +114,9 @@ class GenerateBookWindow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+            if self.settings_widget.isVisible():
+                self.settings_widget.hide()
+                return
             self.start_pos = event.pos()
             self.end_pos = self.start_pos
             self.is_dragging = True
@@ -173,16 +188,28 @@ class GenerateBookWindow(QWidget):
                 os.makedirs(save_dir)
             cropped_img.save(os.path.join(save_dir, "chosen_image.jpg"))
             print("[INFO] 裁剪完成！保存至", save_dir)
-            data, result_text = self.run_ocr()
-            print("[INFO] OCR识别结果：", result_text)
+            try:
+                data, result_text = self.run_ocr()
+                print("[INFO] OCR识别结果：", result_text)
+                self.show_settings(result_text)
+            except BaseException:
+                QMessageBox.critical(None, "OCR识别失败", "[ERROR] OCR识别失败，请检查图片内容。") # type: ignore[arg]
         else:
-            QMessageBox.critical(self, "裁剪失败", "[ERROR] 裁剪区域无效，请检查矩形是否在图片范围内。")
+            QMessageBox.critical(None, "裁剪失败", "[ERROR] 裁剪区域无效，请检查矩形是否在图片范围内。") # type: ignore[arg]
 
     @staticmethod
     def run_ocr():
         img_path = "res/snap_image/chosen_image.jpg"
         data, result_text = get_ocr(img_path)
         return data, result_text
+
+    def show_settings(self, result_text: str):
+        if not result_text: return
+        self.settings_widget.ui.text_info_lb.setText(result_text)
+        self.settings_widget.ui.textEdit.setPlainText(result_text)
+        self.settings_widget.ui.md5_info_lb.setText(get_md5(result_text))
+        self.settings_widget.move((self.width()-self.settings_widget.width())//2, (self.height()-self.settings_widget.height())//2)
+        self.settings_widget.show()
 
 
 if __name__ == "__main__":
