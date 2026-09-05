@@ -84,12 +84,21 @@ class Reader:
         print(f"[INFO] 音频文件大小: {file_size} bytes")
         return True
 
-    def play_audio(self):
+    def play_audio(self, file_path):
+        # 彻底销毁旧播放器
         if self._player is not None:
             self._player.stop()
             self._player.deleteLater()
+            self._player = None  # 置空，确保下一次创建时是全新的
+
+        # 创建新播放器（确保路径存在且绝对）
+        abs_path = os.path.abspath(file_path)
+        if not os.path.exists(abs_path):
+            print(f"[ERROR] 音频文件不存在：{abs_path}")
+            return
+
         self._player = QMediaPlayer()
-        self._player.setMedia(QMediaContent(QUrl.fromLocalFile(os.path.abspath(self.file_path))))
+        self._player.setMedia(QMediaContent(QUrl.fromLocalFile(abs_path)))
         self._player.play()
         print("[INFO] 开始播放音频")
 

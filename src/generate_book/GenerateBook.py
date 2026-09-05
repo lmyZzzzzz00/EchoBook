@@ -7,6 +7,7 @@ from src.reader.Reader import Reader
 import sys
 import os
 import hashlib
+import json
 
 
 def get_md5(text: str) -> str:
@@ -26,6 +27,7 @@ class GenerateBookWindow(QWidget):
         self.bg_ori_pixmap = QPixmap()   # 原始图片
         self.bg_scaled_pixmap = QPixmap()  # 缩放后的背景图（用于绘制）
         self.img_path = ""  # 图片路径
+        self.book_path = ""  # 书籍目录路径
 
         # 鼠标拖拽矩形
         self.start_pos = QPoint()
@@ -45,6 +47,8 @@ class GenerateBookWindow(QWidget):
         self.result_text = ""
         self.data = None
 
+        self.will_save_data = []
+
     def load_img(self, book_name: str, img_path: str):
         """加载图片并创建书籍目录"""
         if not os.path.exists(img_path):
@@ -52,11 +56,11 @@ class GenerateBookWindow(QWidget):
             return
 
         self.img_path = img_path
-        book_path = os.path.join("data", "books", book_name)
-        if not os.path.exists(book_path):
-            os.makedirs(book_path)
+        self.book_path = os.path.join("data", "books", book_name)
+        if not os.path.exists(self.book_path):
+            os.makedirs(self.book_path)
         else:
-            for root, dirs, files in os.walk(book_path, topdown=False):
+            for root, dirs, files in os.walk(self.book_path, topdown=False):
                 for name in files:
                     os.remove(os.path.join(root, name))
                 for name in dirs:
@@ -210,7 +214,7 @@ class GenerateBookWindow(QWidget):
 
     def show_settings(self, result_text: str):
         if not result_text: return
-        self.settings_widget.ui.text_info_lb.setText(result_text)
+        self.settings_widget.ui.textBrowser.setPlainText(result_text)
         self.settings_widget.ui.textEdit.setPlainText(result_text)
         self.settings_widget.ui.md5_info_lb.setText(get_md5(result_text))
         self.settings_widget.ui.textEdit.textChanged.connect(self._change_text)
@@ -226,14 +230,28 @@ class GenerateBookWindow(QWidget):
     def generate_audio(self):
         voice = "zh-CN-XiaoxiaoNeural"
         success = self.reader.generate_audio(self.result_text, voice)
-        if success:
-            print("[INFO] 语音生成成功！")
-            print("[INFO] 语音文件已保存至", self.reader.file_path)
-            self.update()
-            self.settings_widget.hide()
-            self.reader.play_audio()
-        else:
+        if not success:
             print("[ERROR] 语音生成失败！")
+            return
+
+        print("[INFO] 语音生成成功！")
+        original_path = self.reader.file_path
+
+        # 移动文件到书籍目录（确保播放时文件未被移动）
+        new_path = os.path.join(self.book_path, os.path.basename(original_path))
+        if os.path.exists(original_path):
+            # 如果目标目录已存在同名文件，先删除（或覆盖）
+            if os.path.exists(new_path):
+                os.remove(new_path)
+            os.rename(original_path, new_path)
+            self.reader.play_audio(new_path)
+            self.settings_widget.hide()
+            print("[INFO] 语音文件已移动至", new_path)
+        else:
+            print("[ERROR] 语音文件丢失！")
+
+    def save_data(self):
+        pass
 
 
 if __name__ == "__main__":
