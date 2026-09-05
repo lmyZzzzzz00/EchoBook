@@ -49,6 +49,8 @@ class GenerateBookWindow(QWidget):
 
         self.will_save_data = []
 
+        self.settings_widget.ui.pushButton.clicked.connect(self.generate_audio)
+
     def load_img(self, book_name: str, img_path: str):
         """加载图片并创建书籍目录"""
         if not os.path.exists(img_path):
@@ -217,9 +219,14 @@ class GenerateBookWindow(QWidget):
         self.settings_widget.ui.textBrowser.setPlainText(result_text)
         self.settings_widget.ui.textEdit.setPlainText(result_text)
         self.settings_widget.ui.md5_info_lb.setText(get_md5(result_text))
+        # 断开旧连接，防止重复连接
+        try:
+            self.settings_widget.ui.textEdit.textChanged.disconnect(self._change_text)
+        except TypeError:
+            pass
         self.settings_widget.ui.textEdit.textChanged.connect(self._change_text)
-        self.settings_widget.ui.pushButton.clicked.connect(self.generate_audio)
-        self.settings_widget.move((self.width()-self.settings_widget.width())//2, (self.height()-self.settings_widget.height())//2)
+        self.settings_widget.move((self.width() - self.settings_widget.width()) // 2,
+                                  (self.height() - self.settings_widget.height()) // 2)
         self.settings_widget.show()
 
     def _change_text(self):
@@ -247,11 +254,17 @@ class GenerateBookWindow(QWidget):
             self.reader.play_audio(new_path)
             self.settings_widget.hide()
             print("[INFO] 语音文件已移动至", new_path)
+            self.save_data(new_path)
         else:
             print("[ERROR] 语音文件丢失！")
 
-    def save_data(self):
-        pass
+    def save_data(self, new_path: str):
+        will_save_list = [[self.start_pos.x(), self.start_pos.y(), self.end_pos.x(), self.end_pos.y()], new_path]
+        self.will_save_data.append(will_save_list)
+        print("[INFO] 保存数据：", will_save_list)
+        with open(os.path.join(self.book_path, "book_data.json"), "w", encoding="utf-8") as f:
+            json.dump(self.will_save_data, f, ensure_ascii=False, indent=4)  # type: ignore[arg-type]
+        print("[INFO] 保存成功！")
 
 
 if __name__ == "__main__":

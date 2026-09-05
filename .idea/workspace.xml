@@ -4,15 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7fe8cd02-2d28-47e6-a79b-46dd36b0ac39" name="更改" comment="Indev 0.5&#10;加入基础朗读功能">
+    <list default="true" id="7fe8cd02-2d28-47e6-a79b-46dd36b0ac39" name="更改" comment="Indev 0.6&#10;修复BUG">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/books/TestBook/audio_552dd8000303d0719c089b39341c4da3.mp3" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/data/text_data.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/text_data.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/res/audio/audio_be643e2f692e2b9148caaa88cd4b93cc.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/res/audio/audio_e9e38e175fea8bad7c0506b0c12e8007.mp3" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/generate_book/GenerateBook.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/generate_book/GenerateBook.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/generate_book/ui/SettingsWidget.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/generate_book/ui/SettingsWidget.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/generate_book/ui/SettingsWidget.ui" beforeDir="false" afterPath="$PROJECT_DIR$/src/generate_book/ui/SettingsWidget.ui" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/reader/Reader.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/reader/Reader.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -134,7 +131,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788610524941</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Indev 0.6&#10;修复BUG">
+      <option name="closed" value="true" />
+      <created>1788611520643</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1788611520643</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -143,6 +148,7 @@
     <MESSAGE value="Indev 0.3 &#10;加入OCR功能" />
     <MESSAGE value="Indev 0.4&#10;加入文本编辑功能" />
     <MESSAGE value="Indev 0.5&#10;加入基础朗读功能" />
-    <option name="LAST_COMMIT_MESSAGE" value="Indev 0.5&#10;加入基础朗读功能" />
+    <MESSAGE value="Indev 0.6&#10;修复BUG" />
+    <option name="LAST_COMMIT_MESSAGE" value="Indev 0.6&#10;修复BUG" />
   </component>
 </project>
