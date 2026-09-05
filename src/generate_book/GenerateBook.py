@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QCoreApplication, QPoint, QRect
 from PyQt5.QtGui import QGuiApplication, QPixmap, QPainter, QPen
 from src.ocr.Run import run_ocr as get_ocr
 from src.generate_book.SettingsWidget import SettingsWidget
+from src.reader.Reader import Reader
 import sys
 import os
 import hashlib
@@ -39,6 +40,10 @@ class GenerateBookWindow(QWidget):
 
         self.settings_widget = SettingsWidget(self)
         self.settings_widget.hide()
+
+        self.reader = Reader()
+        self.result_text = ""
+        self.data = None
 
     def load_img(self, book_name: str, img_path: str):
         """加载图片并创建书籍目录"""
@@ -189,9 +194,9 @@ class GenerateBookWindow(QWidget):
             cropped_img.save(os.path.join(save_dir, "chosen_image.jpg"))
             print("[INFO] 裁剪完成！保存至", save_dir)
             try:
-                data, result_text = self.run_ocr()
-                print("[INFO] OCR识别结果：", result_text)
-                self.show_settings(result_text)
+                self.data, self.result_text = self.run_ocr()
+                print("[INFO] OCR识别结果：", self.result_text)
+                self.show_settings(self.result_text)
             except BaseException:
                 QMessageBox.critical(None, "OCR识别失败", "[ERROR] OCR识别失败，请检查图片内容。") # type: ignore[arg]
         else:
@@ -208,8 +213,27 @@ class GenerateBookWindow(QWidget):
         self.settings_widget.ui.text_info_lb.setText(result_text)
         self.settings_widget.ui.textEdit.setPlainText(result_text)
         self.settings_widget.ui.md5_info_lb.setText(get_md5(result_text))
+        self.settings_widget.ui.textEdit.textChanged.connect(self._change_text)
+        self.settings_widget.ui.pushButton.clicked.connect(self.generate_audio)
         self.settings_widget.move((self.width()-self.settings_widget.width())//2, (self.height()-self.settings_widget.height())//2)
         self.settings_widget.show()
+
+    def _change_text(self):
+        self.result_text = self.settings_widget.ui.textEdit.toPlainText()
+        # 合并成一行
+        self.result_text = self.result_text.replace("\n", "")
+
+    def generate_audio(self):
+        voice = "zh-CN-XiaoxiaoNeural"
+        success = self.reader.generate_audio(self.result_text, voice)
+        if success:
+            print("[INFO] 语音生成成功！")
+            print("[INFO] 语音文件已保存至", self.reader.file_path)
+            self.update()
+            self.settings_widget.hide()
+            self.reader.play_audio()
+        else:
+            print("[ERROR] 语音生成失败！")
 
 
 if __name__ == "__main__":
