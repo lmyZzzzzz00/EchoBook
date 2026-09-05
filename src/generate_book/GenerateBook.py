@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt5.QtCore import Qt, QCoreApplication, QPoint, QRect
 from PyQt5.QtGui import QGuiApplication, QPixmap, QPainter, QPen
+from src.ocr.Run import run_ocr as get_ocr
 import sys
 import os
 
@@ -121,6 +122,67 @@ class GenerateBookWindow(QWidget):
             # 打印最终矩形（窗口坐标）
             rect = QRect(self.start_pos, self.end_pos).normalized()
             print(f"[INFO] 矩形区域：{rect.topLeft()} -> {rect.bottomRight()}")
+            self.deal_with_img(rect)
+
+    def deal_with_img(self, rect: QRect):
+        print("[INFO] 返回的矩形（窗口坐标）:", rect)
+        dpi = self.devicePixelRatioF()
+
+        # 1. 计算居中偏移（逻辑像素）
+        # bg_scaled_pixmap 的物理尺寸为 (width, height)，逻辑尺寸 = 物理尺寸 / dpi
+        logical_w = self.bg_scaled_pixmap.width() / dpi
+        logical_h = self.bg_scaled_pixmap.height() / dpi
+        offset_x = (self.width() - logical_w) / 2
+        offset_y = (self.height() - logical_h) / 2
+
+        # 2. 窗口坐标 -> 缩放图上的逻辑坐标（减去偏移）
+        crop_x = rect.x() - offset_x
+        crop_y = rect.y() - offset_y
+        crop_w = rect.width()
+        crop_h = rect.height()
+
+        # 3. 限制在缩放图范围内
+        crop_x = max(0, min(crop_x, logical_w))
+        crop_y = max(0, min(crop_y, logical_h))
+        crop_w = min(crop_w, logical_w - crop_x)
+        crop_h = min(crop_h, logical_h - crop_y)
+
+        # 4. 缩放图逻辑坐标 -> 缩放图物理坐标（乘以 dpi）
+        physical_x = int(crop_x * dpi)
+        physical_y = int(crop_y * dpi)
+        physical_w = int(crop_w * dpi)
+        physical_h = int(crop_h * dpi)
+
+        # 5. 缩放图物理坐标 -> 原始图片物理坐标（乘以缩放比例）
+        # 比例因子 = 原始图片宽 / 缩放图宽（都是物理像素）
+        scale_x = self.bg_ori_pixmap.width() / self.bg_scaled_pixmap.width()
+        scale_y = self.bg_ori_pixmap.height() / self.bg_scaled_pixmap.height()
+        # 由于保持宽高比，scale_x 和 scale_y 应该相等，但为了严谨仍分别计算
+        final_rect = QRect(
+            int(physical_x * scale_x),
+            int(physical_y * scale_y),
+            int(physical_w * scale_x),
+            int(physical_h * scale_y)
+        )
+
+        print("[INFO] 裁剪区域（原始图片物理坐标）:", final_rect)
+        cropped_img = self.bg_ori_pixmap.copy(final_rect)
+        if not cropped_img.isNull():
+            save_dir = "res/snap_image"
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            cropped_img.save(os.path.join(save_dir, "chosen_image.jpg"))
+            print("[INFO] 裁剪完成！保存至", save_dir)
+            data, result_text = self.run_ocr()
+            print("[INFO] OCR识别结果：", result_text)
+        else:
+            QMessageBox.critical(self, "裁剪失败", "[ERROR] 裁剪区域无效，请检查矩形是否在图片范围内。")
+
+    @staticmethod
+    def run_ocr():
+        img_path = "res/snap_image/chosen_image.jpg"
+        data, result_text = get_ocr(img_path)
+        return data, result_text
 
 
 if __name__ == "__main__":
